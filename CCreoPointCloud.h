@@ -39,7 +39,7 @@ typedef CGAL::Fuzzy_sphere<Traits> Fuzzy_sphere;
 typedef CGAL::Fuzzy_iso_box<Traits> Fuzzy_iso_box;
 typedef CGAL::Orthogonal_k_neighbor_search<Traits>          K_neighbor_search;
 typedef K_neighbor_search::Distance                         Distance;
-typedef CGAL::Parallel_if_available_tag Concurrency_tag;
+// typedef CGAL::Parallel_if_available_tag Concurrency_tag;
 // Point with normal vector stored in a std::pair.
 typedef std::pair<Point_3, Vector_3> CGALPointVectorPair;
 typedef std::vector<CGALPointVectorPair> CGALPointList;

@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <map>
 #include <iostream>
+#include <fstream>
 #include <numeric>
 
 #include "CPointCloud.h"
@@ -53,37 +54,23 @@ void CPointCloud::createUmbrellaFromTriangulation(std::vector<std::map<int, Umbr
 }
 spPointCloud CPointCloud::CreatePointCloudFromFileWithNormals(const char* fileName, bool onlyPnts)
 {
-	int countPoints = 0;
-	FILE* file = fopen(fileName, "r");
-	CPointEx3D pnt, nrm;
-	spPointCloud pc;
-	if (!onlyPnts)
-	{
-		while (fscanf(file, "%lf %lf %lf %lf %lf %lf", &pnt[0], &pnt[1], &pnt[2], &nrm[0], &nrm[1], &nrm[2]) == 6)
-			countPoints++;
-		rewind(file);
-		pc = std::make_shared<CPointCloud>(countPoints);
-		int currentIndex = 0;
-		while (fscanf(file, "%lf %lf %lf %lf %lf %lf", &pnt[0], &pnt[1], &pnt[2], &nrm[0], &nrm[1], &nrm[2]) == 6)
-		{
-			(*pc)[currentIndex].first = pnt;
-			(*pc)[currentIndex++].second = nrm;
-		}
+	std::ifstream file(fileName, std::ios::binary);
+	file.seekg(0, std::ios::end);
+	int countPoints = file.tellg() / (3*4);
+	file.seekg(0, std::ios::beg);
+	std::cout << countPoints << " points" << std::endl;
+	// float points[countPoints][3];
+	char *buffer = new char[countPoints*12];
+	file.read(buffer, countPoints*12);
+	file.close();
+	float (*points)[countPoints][3] = reinterpret_cast<float(*)[countPoints][3]>(buffer);
+	spPointCloud pc = std::make_shared<CPointCloud>(countPoints);
+	for (int i = 0; i < countPoints; ++i) {
+		CPointEx3D pnt((*points)[i][0], (*points)[i][1], (*points)[i][2]), nrm;
+		(*pc)[i].first = pnt;
+		(*pc)[i].second = nrm;
 	}
-	else
-	{
-		while (fscanf(file, "%lf %lf %lf", &pnt[0], &pnt[1], &pnt[2]) == 3)
-			countPoints++;
-		rewind(file);
-		pc = std::make_shared<CPointCloud>(countPoints);
-		int currentIndex = 0;
-		while (fscanf(file, "%lf %lf %lf", &pnt[0], &pnt[1], &pnt[2]) == 3)
-		{
-			(*pc)[currentIndex].first = pnt;
-			(*pc)[currentIndex++].second = nrm;
-		}
-	}
-	fclose(file);
+	delete[] buffer;
 	return pc;
 }
 
@@ -95,15 +82,15 @@ CPointCloud::CPointCloud(const char* file, bool onlyPnts)
 
 void CPointCloud::savePointCloud(const char* fileName, bool withNormals) const
 {
-	FILE* file = fopen(fileName, "w");
-	for (int i = 0; i < this->GetSize(); i++)
-	{
-		if (withNormals)
-			fprintf(file, "%lf %lf %lf %lf %lf %lf\n", (*this)[i].first[0], (*this)[i].first[1], (*this)[i].first[2],
-				normals[i][0], normals[i][1], normals[i][2]);
-		else fprintf(file, "%lf %lf %lf\n", (*this)[i].first[0], (*this)[i].first[1], (*this)[i].first[2]);
+	std::ofstream file(fileName, std::ios::binary);
+	for (int i = 0; i < this->GetSize(); ++i) {
+		float *buffer = new float[3];
+		buffer[0] = (*this)[i].first[0];
+		buffer[1] = (*this)[i].first[1];
+		buffer[2] = (*this)[i].first[2];
+		file.write((char *)buffer, 12);
 	}
-	fclose(file);
+	file.close();
 }
 
 CPointCloud::CPointCloud(const CPointCloud& pcSource):

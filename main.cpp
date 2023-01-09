@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
     string fileName = "smoothed.txt";
 	if (argc > 6) fileName = string(argv[7]);
     printf("Reading point cloud...");
-    CCreoPointCloud pc(argv[1], false);
+    CCreoPointCloud pc(argv[1], true);
     printf("done.\n");
     printf("smoothing...");
     pc.smooth_iterative(k, lambda, mu, alpha, isRegularized);
